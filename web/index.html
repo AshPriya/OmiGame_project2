@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Omi Game</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            div.position {
+                background-color: yellow;
+                width:73px;
+                height:100px;
+                padding:10px;
+                border:1px solid #aaaaaa;
+                display:inline-block;
+            }
+        </style>
+
+        <script src="knockout-3.4.0.js"></script>
+        <script src="jquery-1.12.3.min.js"></script>
+    </head>
+    <body>
+        <script>
+            /* Updating the server on players moves */
+
+            /****************************************************** 
+             Edit these two functions to communicate with the server.
+             Hint -  you can use JQuery and Ajax here.
+             *******************************************************/
+
+            var playing = false;
+            var initJSON = '{"playing":false, "cards":[],"showHand" : false, "showCards" : false , "message" : "Welcome to Omi Online"}';
+            
+            function PlayCard(card) {
+                if(playing){
+                    $.get("userController", {playing: playing, card: card}, function (data, status) {
+                        Update(data);
+                        console.log(data);
+                    });
+                }
+            }
+
+            function getUpdate() {
+                if(!playing) {
+                    $.get("userController", {playing: playing}, function (data, status) {
+                        Update(data);
+                        console.log(data);
+                    });
+                }
+            }
+
+            $(document).ready(function () {
+                Update(initJSON);
+                getUpdate();
+                setInterval(getUpdate, 3000);
+            });
+            /******************************************************/
+        </script>
+
+        <h3>Network card game</h3>
+        <h2 data-bind="text: userName"></h2>
+        <span data-bind="text: message"></span> 
+
+        <!--cards-->
+        <div data-bind="visible: shouldShowPlayedCards">
+            <div class = "position" style = "margin-left: 110px;" >
+                <img data-bind="attr: { src: card2 }" >
+            </div>
+
+            <br/>
+
+            <div class = "position">
+                <img data-bind="attr: { src: card1 }">
+            </div>
+
+            <div class = "position" style = "margin-left: 110px;">
+                <img data-bind="attr: { src: card3 }">
+            </div>
+
+            <br/>
+
+            <!-- Player's Card -->
+            <div class = "position" style = "margin-left: 110px;">
+                <img data-bind="attr: { src: mycard }">
+            </div>
+        </div> 
+        <br/>
+        <div data-bind="foreach: cards , visible: shouldShowHand">
+            <img data-bind="attr: { src: image }, click: function(data, event) { PlayCard(image);}"/>
+        </div>
+        <br/>
+        <button onclick = "Update(json6)"> Start View </button>
+
+        <script>
+            // This is a simple *viewmodel* - JavaScript that defines the data and behavior of your UI
+            function AppViewModel() {
+                var self = this;
+                self.cards = ko.observableArray([
+                    { image: 'cards/0_1.png' },
+                    { image: 'cards/1_2.png' },
+                    { image: 'cards/0_3.png' }
+                ]);
+                self.card1 = ko.observable("cards/0_1.png");
+                self.card2 = ko.observable("cards/0_1.png");
+                self.card3 = ko.observable("cards/0_1.png");
+                self.mycard = ko.observable("cards/0_1.png");
+                self.shouldShowHand = ko.observable(false);
+                self.shouldShowPlayedCards = ko.observable(false);	
+                self.message = ko.observable("waiting...");
+                self.userName = ko.observable("");
+            }
+
+            viewModel = new AppViewModel();
+            ko.applyBindings(viewModel);
+
+            function Update(statusJSON) {
+                var parsed = JSON.parse(statusJSON);
+                playing = parsed.playing;
+                viewModel.cards(parsed.cards);
+                viewModel.card1(parsed.card1);
+                viewModel.card2(parsed.card2);
+                viewModel.card3(parsed.card3);
+                viewModel.mycard(parsed.mycard);
+                viewModel.shouldShowHand(parsed.showHand);
+                viewModel.shouldShowPlayedCards(parsed.showCards);
+                viewModel.message(parsed.message);
+                viewModel.userName(parsed.userName);
+            }
+        </script>
+    </body>
+</html>
